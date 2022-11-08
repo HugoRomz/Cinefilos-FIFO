@@ -1,0 +1,267 @@
+//Agregar telefono a socio
+
+CREATE DATABASE cinefilos;
+
+\c cinefilos;
+
+
+CREATE TABLE local(
+    id_local serial NOT NULL  PRIMARY KEY,
+    nombreLocal text,
+    direccion text,
+    ciudad text
+);
+CREATE TABLE genero (
+        id_genero serial NOT NULL PRIMARY KEY,
+        nombreG text
+);
+CREATE TABLE pelicula(
+    id_pelicula serial NOT NULL  PRIMARY KEY,
+    titulo text,
+    director text,
+    precio float,
+    stock int,
+    id_local int,
+    status int,
+    FOREIGN KEY (id_local) REFERENCES local(id_local)
+);
+CREATE TABLE genero_pelicula(
+    id_pelicula int,
+    id_genero int,
+    FOREIGN KEY (id_pelicula) REFERENCES pelicula(id_pelicula),
+    FOREIGN KEY (id_genero) REFERENCES genero(id_genero),
+    PRIMARY KEY(id_pelicula,id_genero)
+);
+
+
+CREATE TABLE socio(
+    id_socio serial NOT NULL  PRIMARY KEY,
+    nombres text,
+    apellidos text,
+    curp text,
+    telefeno text,
+    direccion text,
+    tipo text,
+    statusM int
+);
+
+CREATE TABLE renta(
+    id_renta serial NOT NULL  PRIMARY KEY,
+    id_socio int,
+    id_local int,
+    status int,
+    exedente float,
+    descuento float,
+    total int,
+    FOREIGN KEY (id_socio) REFERENCES socio(id_socio),
+    FOREIGN KEY (id_local) REFERENCES local(id_local)
+);
+CREATE TABLE det_renta(
+    cns serial,
+    id_renta int,
+    id_pelicula int,
+    cantidad int,
+    fecha_entrada date,
+    fecha_salida date,
+    subtotal float,
+    FOREIGN KEY (id_renta) REFERENCES renta(id_renta),
+    FOREIGN KEY (id_pelicula) REFERENCES pelicula(id_pelicula),
+    PRIMARY KEY(cns,id_renta)
+);
+
+
+-- GENEROS
+
+INSERT INTO genero(nombreg) VALUES ('Drama');
+INSERT INTO genero(nombreg) VALUES ('Crimenes');
+INSERT INTO genero(nombreg) VALUES ('Western');
+INSERT INTO genero(nombreg) VALUES ('Accion');
+INSERT INTO genero(nombreg) VALUES ('Belico');
+INSERT INTO genero(nombreg) VALUES ('Fantasia');
+INSERT INTO genero(nombreg) VALUES ('Suspenso');
+INSERT INTO genero(nombreg) VALUES ('Ciencia Ficcion');
+INSERT INTO genero(nombreg) VALUES ('Misterio');
+INSERT INTO genero(nombreg) VALUES ('Terror');
+INSERT INTO genero(nombreg) VALUES ('Romance');
+INSERT INTO genero(nombreg) VALUES ('Aventura');
+INSERT INTO genero(nombreg) VALUES ('Thriller');
+INSERT INTO genero(nombreg) VALUES ('Sci-Fi');
+INSERT INTO genero(nombreg) VALUES ('Guerra');
+INSERT INTO genero(nombreg) VALUES ('Comedia');
+INSERT INTO genero(nombreg) VALUES ('Anime');
+INSERT INTO genero(nombreg) VALUES ('Family');
+INSERT INTO genero(nombreg) VALUES ('No Especificado'); -- id_genero 19
+-- PELICULAS
+
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Sueño de fuga','Frank Darabont',20,25);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El padrino','Francis Ford Coppola',15,40);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El padrino parte 2','Francis Ford Coppola',20,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Tiempos violentos','Quentin Tarantino',20,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El Bueno, el Feo y el Malo','Sergio Leone',20,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Batman: el caballero de la noche','Christopher Nolan',25,50);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('12 Hombres sin Piedad','Sidney Lumet',20,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('La lista de Schindler','Steven Spielberg',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El Señor de los Anillos: el retorno del Rey','Peter Jackson',27,40);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El club de la pelea','David Fincher',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Star Wars: Episodio V - El Imperio contraataca','George Lucas',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El señor de los anillos: la comunidad del anillo','Peter Jackson',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El origen','Christopher Nolan',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Buenos muchachos','Martin Scorsese',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Star Wars: episodio IV - una nueva esperanza','George Lucas',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Los siete samuráis','Akira Kurosawa',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Forrest Gump','Robert Zemeckis',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('The Matrix','Wachowski Sisters',55,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El Señor de los Anillos: las dos torres','Peter Jackson',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Ciudad de Dios','Kátia Lund',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Se7en: los siete pecados capitales','David Fincher',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El silencio de los inocentes','Jonathan Demme',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Once upon a time in the west','Sergio Leone',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Casablanca','Michael Curtiz',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Los sospechosos de siempre','Jonathan Demme',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Indiana Jones y los cazadores del arca perdida','Steven Spielberg',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Rear Window','Alfred Hitchcock',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('¡Que bello es vivir!','Frank Capra',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('American History X','Tony Kaye',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Apocalipsis ahora','Francis Ford Coppola',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Terminator 2: el juicio final','James Cameron',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Salvando al soldado Ryan','Steven Spielberg',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Amnesia','Christopher Nolan',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Alien','Ridley Scott',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Modern Times','Charlie Chaplin',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El viaje de Chihiro','Hayao Miyazaki',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Intriga Internacional','Alfred Hitchcock',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Volver al futuro','Robert Zemeckis',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('La vita è bella','Roberto Benigni',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El resplandor','Stanley Kubrick',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El pianista','Roman Polanski',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('El ciudadano Kane','Orson Welles',15,30);
+INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Los infiltrados','Martin Scorsese',15,30);
+
+
+--GENERO-PELICULA
+
+
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (1,1);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (2,2);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (3,2);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (4,2);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (5,3);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (6,4);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (7,1);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (8,5);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (9,6);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (10,7);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (11,8);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (12,6);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (13,8);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (14,2);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (15,8);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (16,4);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (17,1);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (18,8);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (19,6);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (20,5);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (21,9);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (22,10);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (23,3);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (24,11);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (25,10);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (26,12);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (27,13);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (28,10);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (29,1);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (30,5);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (31,14);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (32,15);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (33,9);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (34,14);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (35,16);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (36,17);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (37,7);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (38,8);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (39,15);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (40,10);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (41,5);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (42,1);
+INSERT INTO genero_pelicula(id_pelicula,id_genero) VALUES (43,2);
+
+
+--LOCAL
+INSERT INTO local(nombrelocal,direccion,ciudad) VALUES ('Cinefilos El Original','Central Sur 7b, Los Naranjos, Centro, 30830 Tapachula de Córdova y Ordoñez, Chis.','Tapachula');
+INSERT INTO local(nombrelocal,direccion,ciudad) VALUES ('Cinefilos Los hijos del Original','Octava Avenida Nte. 43, Los Naranjos, Centro, 30830 Tapachula de Córdova y Ordoñez, Chis.','Tapachula');
+INSERT INTO local(nombrelocal,direccion,ciudad) VALUES ('Cinefilos Galerias','Galerias Tapachula, Los Naranjos, Tapachula, Chis.','Tapachula');
+
+
+
+select pelicula.titulo,pelicula.director,pelicula.stock,genero.nombreg from pelicula,genero,genero_pelicula as gp where gp.id_pelicula=pelicula.id_pelicula and gp.id_genero=genero.id_genero ORDER BY gp.id_pelicula;
+ 
+ 
+ 
+ -- funcion para calcular el subtotal de compra de pelicula
+ CREATE OR REPLACE FUNCTION cargar_subtotal () RETURNS TRIGGER
+AS
+$$
+    DECLARE 
+        _subtotal NUMERIC;
+    BEGIN
+        SELECT (precio*det_renta.cantidad) INTO _subtotal FROM det_renta INNER JOIN pelicula ON det_renta.id_pelicula = pelicula.id_pelicula WHERE new.cns = cns;
+        UPDATE det_renta SET subtotal = _subtotal WHERE cns = NEW.cns;
+
+        RETURN NEW;
+    END;
+$$
+LANGUAGE plpgsql;
+-- se ejecuta despues de insertar los datos en det_renta
+CREATE TRIGGER TR_INSERT_subtotal after INSERT ON det_renta
+for each row
+execute procedure cargar_subtotal();
+
+-- ----------------------------------------------------------------------------------------------------------------------------
+-- funcion para insertar en la tabla genero_pelicula 
+-- Despues de que se inserta pelicula se hace una consulta para capturar el ultimo id de ese registro
+-- el genero no especificado esta por defecto con el id_genero = 19
+CREATE OR REPLACE FUNCTION insert_genero_pelicula () RETURNS TRIGGER
+AS
+$BODY$
+    DECLARE 
+        _id_pelicula int;
+    BEGIN
+    
+        select id_pelicula into _id_pelicula from pelicula order by id_pelicula desc limit 1 ;
+        insert into genero_pelicula (id_pelicula, id_genero)values(_id_pelicula,19);
+         
+        RETURN NEW;
+    END;
+$BODY$
+LANGUAGE plpgsql;
+CREATE TRIGGER TR_INSERT_genero_pelicula AFTER insert ON pelicula
+for each row
+execute procedure insert_genero_pelicula();
+
+-- --------------------------------------------------------------------------------
+-- funcion para descontar el stock de las peliculas que se vayan rentando
+CREATE OR REPLACE FUNCTION descontar_stock () RETURNS TRIGGER
+AS
+$$
+    DECLARE 
+        nuevo_valor int;
+    BEGIN
+        
+        select (stock-1) into nuevo_valor FROM pelicula INNER JOIN det_renta ON pelicula.id_pelicula = det_renta.id_pelicula;
+        UPDATE pelicula SET stock = nuevo_valor WHERE id_pelicula = NEW.id_pelicula;
+
+        RETURN NEW;
+    END;
+$$
+LANGUAGE plpgsql;
+CREATE TRIGGER TR_DESC_STOCK after INSERT ON det_renta
+for each row
+execute procedure descontar_stock();
+
+
+
+
+
+ 
+ 
+ 
