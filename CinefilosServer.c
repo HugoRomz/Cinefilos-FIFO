@@ -18,6 +18,9 @@ PGresult * res;
 void mostrarPeli_uno(PGconn * conn);
 void mostrarPeli_dos(PGconn * conn);
 
+//reportes
+void menuReportes(PGconn * conn);
+void sociosSinRentas(PGconn * conn);
 
 //renta
 void menuRenta(PGconn * conn);
@@ -84,6 +87,7 @@ int main() {
             menuSocio(conn);
             break;
          case 4:
+            menuReportes(conn);
             // system("clear");
             break;
          }
@@ -232,20 +236,25 @@ void menuRenta(PGconn * conn) {
    int resultado = strcmp(data, "si");
 
    if (resultado == 0) {
-   
+   printf("entraste a la comprobacion de cliente \n");
+
    char instrucc[1000], filas[1000], columnas[1000];
    fd = open("MIFIFO", O_RDONLY);
    read(fd, instrucc, sizeof(instrucc));
    close(fd);
    resultado = PQexec(conn, instrucc);
+ 
 
    if (resultado != NULL) {
-      sprintf(data,"ok");
+      printf("entraste a la comprobacion de cliente ok \n");
       fd = open("MIFIFO", O_WRONLY);
       write(fd, data, sizeof(data));
       close(fd);
+
    }
    else {
+      
+      printf("entraste a la comprobacion de cliente fallo \n");
 
       sprintf(data,"no");
       fd = open("MIFIFO", O_WRONLY);
@@ -257,6 +266,7 @@ void menuRenta(PGconn * conn) {
    //close(fd2);
 
       do {
+         
          printf("\t Estas en submenu Renta \n");
 
          fd = open("MIFIFO", O_RDONLY);
@@ -293,10 +303,6 @@ void menuRenta(PGconn * conn) {
 
    }
    else {
-      
-      fd = open("MIFIFO", O_RDONLY);
-      read(fd, data, sizeof(data));
-      close(fd);
 
       int resultado = strcmp(data, "no");
 
@@ -305,9 +311,6 @@ void menuRenta(PGconn * conn) {
       }
       else {
 
-         fd = open("MIFIFO", O_RDONLY);
-         read(fd, data, sizeof(data));
-         close(fd);
 
       }
 
@@ -705,6 +708,73 @@ void mostrarPeli_dos(PGconn * conn) {
    time_spent = 0;
    char instrucc[100], filas[100], columnas[100];
    sprintf(instrucc, "select * from pelicula where status = 0;");
+   resultado = PQexec(conn, instrucc);
+   int fil = PQntuples(resultado);
+   int col = PQnfields(resultado);
+   sprintf(filas, "%d", fil);
+   sprintf(columnas, "%d", col);
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%-5s\t|", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n________________________________________________________________________________________________________\n");
+      }
+   } else {
+      printf("\nNo hay datos");
+   }
+   close(fd2);
+   char tiempo[1000];
+   fin = clock();
+   time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
+   printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
+
+}
+///
+
+void menuReportes(PGconn * conn) {
+   do {
+      printf("\t Estas en submenu REPORTES \n");
+
+      fd = open("MIFIFO", O_RDONLY);
+      read(fd, opcionfifo, sizeof(opcionfifo));
+      close(fd);
+      opcionMenu = atoi(opcionfifo);
+
+      switch (opcionMenu) {
+         case 1:
+            printf("\t|     1.  Socios que no han rentado            |\n");
+            sociosSinRentas(conn);
+            break;
+         case 2:
+            printf("\t|     2.  Peliculas de ciencis f.              |\n");
+            break;
+         case 3:
+            printf("\t|     3.  Total de abonos en el mes de febrero.|\n");
+            break;
+         case 4:
+            printf("\t|     4.  Socios que han rentado               |\n");
+
+            break;
+         case 5:
+          printf("\t|     5.- Peliculas de cada genero rentadas    |\n");
+   
+            break;
+
+      }
+   } while (opcionMenu != 6);
+}
+void sociosSinRentas(PGconn * conn) {
+   inicio = clock();
+   time_spent = 0;
+   char instrucc[100], filas[100], columnas[100];
+   sprintf(instrucc, "SELECT t1.id_socio,t1.nombre,t1.apellidos FROM socio t1 LEFT JOIN renta t2 ON t2.id_socio = t1.id_socio WHERE t2.id_socio IS NULL");
    resultado = PQexec(conn, instrucc);
    int fil = PQntuples(resultado);
    int col = PQnfields(resultado);

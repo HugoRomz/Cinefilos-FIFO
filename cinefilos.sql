@@ -91,6 +91,7 @@ INSERT INTO genero(nombreg) VALUES ('Comedia');
 INSERT INTO genero(nombreg) VALUES ('Anime');
 INSERT INTO genero(nombreg) VALUES ('Family');
 INSERT INTO genero(nombreg) VALUES ('No Especificado'); -- id_genero 19
+
 -- PELICULAS
 
 INSERT INTO pelicula(titulo,director,stock,precio) VALUES ('Sueño de fuga','Frank Darabont',20,25);
@@ -191,77 +192,168 @@ INSERT INTO local(nombrelocal,direccion,ciudad) VALUES ('Cinefilos El Original',
 INSERT INTO local(nombrelocal,direccion,ciudad) VALUES ('Cinefilos Los hijos del Original','Octava Avenida Nte. 43, Los Naranjos, Centro, 30830 Tapachula de Córdova y Ordoñez, Chis.','Tapachula');
 INSERT INTO local(nombrelocal,direccion,ciudad) VALUES ('Cinefilos Galerias','Galerias Tapachula, Los Naranjos, Tapachula, Chis.','Tapachula');
 
+--Renta
+insert into renta (id_socio,id_local,status)values(1,3,0);
 
+--Detalle_renta
+insert into det_renta (id_renta,id_pelicula,cantidad,fecha_salida)values(1,2,1,'2022-01-11');
 
-select pelicula.titulo,pelicula.director,pelicula.stock,genero.nombreg from pelicula,genero,genero_pelicula as gp where gp.id_pelicula=pelicula.id_pelicula and gp.id_genero=genero.id_genero ORDER BY gp.id_pelicula;
- 
- 
- 
- -- funcion para calcular el subtotal de compra de pelicula
- CREATE OR REPLACE FUNCTION cargar_subtotal () RETURNS TRIGGER
-AS
-$$
-    DECLARE 
-        _subtotal NUMERIC;
-    BEGIN
-        SELECT (precio*det_renta.cantidad) INTO _subtotal FROM det_renta INNER JOIN pelicula ON det_renta.id_pelicula = pelicula.id_pelicula WHERE new.cns = cns;
-        UPDATE det_renta SET subtotal = _subtotal WHERE cns = NEW.cns;
+--////////////////////////////////////////////////////////////////////
 
-        RETURN NEW;
-    END;
-$$
-LANGUAGE plpgsql;
--- se ejecuta despues de insertar los datos en det_renta
-CREATE TRIGGER TR_INSERT_subtotal after INSERT ON det_renta
-for each row
-execute procedure cargar_subtotal();
-
--- ----------------------------------------------------------------------------------------------------------------------------
--- funcion para insertar en la tabla genero_pelicula 
--- Despues de que se inserta pelicula se hace una consulta para capturar el ultimo id de ese registro
--- el genero no especificado esta por defecto con el id_genero = 19
-CREATE OR REPLACE FUNCTION insert_genero_pelicula () RETURNS TRIGGER
-AS
-$BODY$
-    DECLARE 
-        _id_pelicula int;
-    BEGIN
-    
-        select id_pelicula into _id_pelicula from pelicula order by id_pelicula desc limit 1 ;
-        insert into genero_pelicula (id_pelicula, id_genero)values(_id_pelicula,19);
-         
-        RETURN NEW;
-    END;
-$BODY$
-LANGUAGE plpgsql;
-CREATE TRIGGER TR_INSERT_genero_pelicula AFTER insert ON pelicula
-for each row
-execute procedure insert_genero_pelicula();
-
--- --------------------------------------------------------------------------------
--- funcion para descontar el stock de las peliculas que se vayan rentando
-CREATE OR REPLACE FUNCTION descontar_stock () RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION regresar_stock () RETURNS TRIGGER
 AS
 $$
     DECLARE 
         nuevo_valor int;
+        _status int;
+        _id_pelicula int;
     BEGIN
-        
-        select (stock-1) into nuevo_valor FROM pelicula INNER JOIN det_renta ON pelicula.id_pelicula = det_renta.id_pelicula;
-        UPDATE pelicula SET stock = nuevo_valor WHERE id_pelicula = NEW.id_pelicula;
-
+        select status into _status from renta where id_renta = new.id_renta;
+      
+        if(_status > 0 ) then 
+            UPDATE pelicula SET stock = stock+1 WHERE id_pelicula in (select id_pelicula from det_renta inner join renta on det_renta.id_renta = renta.id_renta and renta.id_socio = new.id_socio);
+        else
+            
+        end if;
         RETURN NEW;
     END;
 $$
 LANGUAGE plpgsql;
-CREATE TRIGGER TR_DESC_STOCK after INSERT ON det_renta
+CREATE TRIGGER TR_REG_STOCK after update ON renta
 for each row
-execute procedure descontar_stock();
+execute procedure regresar_stock();
+
+--/////////////////////////////////////////////////////////////////////
+
+CREATE OR REPLACE FUNCTION calcular_por_fechas () RETURNS TRIGGER
+AS
+$BODY$
+    DECLARE 
+        dias int;
+    BEGIN
+        select (fecha_entrada-fecha_salida)into dias from det_renta inner join renta on det_renta.id_renta = renta.id_renta and cns = new.cns;
+        if(dias <= 5) then
+            UPDATE renta SET descuento = (0.1), exedente = 0 WHERE id_renta = NEW.id_renta;
+        else
+            UPDATE renta SET exedente = (dias * 10), descuento = 0 WHERE id_renta = NEW.id_renta;
+        end if;
+        RETURN NEW;
+    END;
+$BODY$
+LANGUAGE plpgsql;
+CREATE TRIGGER TR_UPDATE_FECHA after UPDATE ON det_renta
+for each row
+execute procedure calcular_por_fechas();
+
+--/////////////////////////////////////////////////////////////////////////////////////////////////
+
+CREATE OR REPLACE FUNCTION checar_stock () RETURNS TRIGGER
+AS
+$$
+    DECLARE 
+        total int;
+        _subtotal NUMERIC;
+        
+    BEGIN
+        SELECT stock into total FROM pelicula INNER JOIN det_renta ON pelicula.id_pelicula = det_renta.id_pelicula AND cns = new.cns;
+        SELECT (precio*det_renta.cantidad) INTO _subtotal FROM det_renta INNER JOIN pelicula ON det_renta.id_pelicula = pelicula.id_pelicula and cns = new.cns;
+--         UPDATE det_renta SET subtotal = _subtotal WHERE cns = NEW.cns;
+        if (SELECT stock FROM pelicula INNER JOIN det_renta ON pelicula.id_pelicula = det_renta.id_pelicula AND cns = new.cns) > 0 then
+            UPDATE pelicula SET stock = stock-1 WHERE id_pelicula = NEW.id_pelicula;
+            UPDATE det_renta SET subtotal = _subtotal WHERE cns = NEW.cns;
+        else
+             RAISE EXCEPTION  'todas las copias estan rentadas, no puedes rentar';
+--              ROLLBACK;
+        end if;
+        RETURN NEW;
+        
+      
+    END;
+$$
+LANGUAGE plpgsql;
+CREATE TRIGGER TR_CHECK_STOCK AFTER INSERT ON det_renta
+for each row
+execute procedure checar_stock();
+
+--//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
 
+CREATE OR REPLACE FUNCTION cargar_total () RETURNS TRIGGER
+AS
+$$
+    DECLARE 
+        _subtotal NUMERIC :=0;
+        _importe_total NUMERIC :=0;
+        _descuento NUMERIC :=0;
+        _exedente NUMERIC :=0;     
+    BEGIN
+    
+        SELECT SUM(subtotal) INTO _importe_total FROM det_renta where id_renta = new.id_renta;
+        
+        select exedente into _exedente from renta inner join det_renta on renta.id_renta = det_renta.id_renta;
+--         select descuento from renta inner join det_renta on renta.id_renta = det_renta.id_renta and cns =81;
+        if(select exedente from renta where id_renta = new.id_renta)>0 then 
+             UPDATE renta SET total = (_importe_total+_exedente) WHERE id_renta = NEW.id_renta;
+        elseif(select descuento from renta where id_renta = new.id_renta)>0 then
+             UPDATE renta SET total = (_importe_total-(_importe_total*0.1)) WHERE id_renta = NEW.id_renta;
+        else
+        
+        end if;
+        RETURN NEW;
+    END;
+$$
+LANGUAGE plpgsql;
+-- CREACION DEL TRIGGER para crear el importe automaticamente
+CREATE TRIGGER TR_INSERT_total AFTER update ON det_renta
+for each row
+execute procedure cargar_total();
 
+--/////////////////////////////////////////////////////////////////////////////////////7
+
+
+CREATE OR REPLACE FUNCTION calcular_por_fechas () RETURNS TRIGGER
+AS
+$BODY$
+    DECLARE 
+        dias int;
+    BEGIN
+        select (fecha_entrada-fecha_salida)into dias from det_renta inner join renta on det_renta.id_renta = renta.id_renta and cns = new.cns;
+        if(dias <= 5) then
+            UPDATE renta SET descuento = (0.1), exedente = 0 WHERE id_renta = NEW.id_renta;
+        else
+            UPDATE renta SET exedente = (dias * 10), descuento = 0 WHERE id_renta = NEW.id_renta;
+        end if;
+        RETURN NEW;
+    END;
+$BODY$
+LANGUAGE plpgsql;
+CREATE TRIGGER TR_UPDATE_FECHA after UPDATE ON det_renta
+for each row
+execute procedure calcular_por_fechas();
+
+
+--CONSULTA DE GENERO PELICULA
+select pelicula.titulo,pelicula.director,pelicula.stock,genero.nombreg from pelicula,genero,genero_pelicula as gp where gp.id_pelicula=pelicula.id_pelicula and gp.id_genero=genero.id_genero ORDER BY gp.id_pelicula;
  
+
+ --CONSULTA PELICULAS CCFICCION
+SELECT p.id_local,l.nombrelocal, p.titulo,gp.id_genero
+
+FROM pelicula AS p
+
+INNER JOIN local AS l ON p.id_local = l.id_local
+INNER JOIN genero_pelicula as gp ON gp.id_pelicula = p.id_pelicula and gp.id_genero = 4;
+
+
+--consulta que devuelve los socios que han rentado, mostrando: nombre completo, direccion, telefono, titulo de la pelicula, fecha de renta
+SELECT t1.id_socio,t1.nombre,t1.apellidos,t1.direccion,p1.titulo,t3.fecha_salida FROM socio t1 
+                inner join renta t2 ON t2.id_socio = t1.id_socio 
+                        inner join det_renta t3 ON t3.id_renta = t2.id_renta
+                            inner join pelicula p1 on p1.id_pelicula = t3.id_pelicula;
+
+
+
  
  
