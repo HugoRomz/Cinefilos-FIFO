@@ -24,6 +24,10 @@ char data[1000];
 // reportes
 void menuReporte();
 void sociosSinRentas();
+void peliculasCienciaF();
+void abonosFebrero();
+void sociosRentas();
+void peliculasRentadas_x_genero();
 
 // apartado de pelicula
 void menuPelicula();
@@ -32,6 +36,7 @@ void MostrarPeliculas();
 void consultarPelicula();
 void actualizarPelicula();
 void bajaPelicula();
+void editarGeneroPelicula();
 // genero
 void insertarGenero();
 void buscarGenero();
@@ -113,8 +118,9 @@ void menuPelicula()
         printf("\t|             °°° CINEFILOS °°°            |\n");
         printf("\t============================================\n");
         printf("\t|    1.  Peliculas.   |   2.  Generos.     |\n");
+        printf("\t|       3. Editar genero de la pelicula    |\n");
         printf("\t|------------------------------------------|\n");
-        printf("\t|               3.- Regresar.              |\n");
+        printf("\t|               4.- Regresar.              |\n");
         printf("\t============================================\n");
         printf("\tElige tu Opcion: ");
         scanf("\t%d", &opcionMenu);
@@ -225,8 +231,37 @@ void menuPelicula()
 
             } while (opcionMenu != 6);
             break;
+            case 3:
+                editarGeneroPelicula();
+            break;
         }
-    } while (opcionMenu != 3);
+    } while (opcionMenu != 4);
+}
+void editarGeneroPelicula(){
+    char fil[100], col[100], cad[1000];
+    int fd2 = open("MIFIFO", O_RDONLY);
+    int id_peli;
+    read(fd2, fil, sizeof(fil));
+    read(fd2, col, sizeof(col));
+
+    int filas = atoi(fil);
+    int columnas = atoi(col);
+
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < columnas; j++)
+        {
+            read(fd2, cad, sizeof(cad));
+            printf("%-5s\t|   ", cad);
+        }
+        printf("\n");
+        printf("--------------------------------------------------------------------------------- \n");
+    }
+    // close(fd);
+    close(fd2);
+    id_peli = atoi (cad);
+    printf("el ultimo id de las peliculas son %d",cad);
+
 }
 void menuSocio()
 {
@@ -274,36 +309,22 @@ void menuSocio()
         }
     } while (opcionMenu != 6);
 }
+
 void menuRenta()
 {
     char opSocio[50], nombres[50], telefono[100];
 
-    printf("\t=====================================================\n");
-    printf("\t|                  ** Bienvenidos **                |\n");
-    printf("\t=====================================================\n");
-    printf("--------------------------------------------------------------------------------- \n");
-    printf("\n ¿Se encuentra registrado? si / no \n");
-    scanf("\t%s", &opSocio);
+    
     printf("--------------------------------------------------------------------------------- \n");
 
-    int resultado = strcmp(opSocio, "si");
-
-    if (resultado == 0)
-    {
-
-        sprintf(data, "si");
-        fd = open("MIFIFO", O_WRONLY);
-        write(fd, data, sizeof(data));
-        close(fd);
-
-        fflush(stdin);
+        /*fflush(stdin);
         puts("Ingresa tu nombre con el que estas registrado ");
         scanf("%*c%[^\n]", nombres);
         fflush(stdin);
         puts("ingrese su numero de telefono :");
         scanf("%s", &telefono);
         fflush(stdin);
-        sprintf(data, "select * from socio where nombres = '%s' and telefono = '%s';", nombres, telefono);
+        sprintf(data, "select * from socio where nombres = '%s' and telefeno = '%s';", nombres, telefono);
         fd = open("MIFIFO", O_WRONLY);
         write(fd, data, sizeof(data));
         close(fd);
@@ -312,18 +333,39 @@ void menuRenta()
         read(fd, data, sizeof(data));
         close(fd);
 
-        int resultado = strcmp(data, "ok");
+        int resultado2 = strcmp(data,"ok");
 
-        if (resultado == 0)
+        if (resultado2 == 0)
         {
-
-            printf("\t Comprobacion de usuario completada \n");
+             printf("\n Hola %s \n ", nombres);
         }
-            do
-            {
+        else{
+             printf("\n no se encontraron datos \n");
+        }*/
 
+        puts("Ingresa tu nombre con el que estas registrado ");
+        scanf("%*c%[^\n]", nombres);
+        puts("ingrese su numero de telefono :");
+        scanf("%s", &telefono);
+        sprintf(data, "select id_socio from socio where nombres = '%s' and telefono = '%s';", nombres, telefono);
+        fd = open("MIFIFO", O_WRONLY);
+        write(fd, data, sizeof(data));
+        close(fd);
+
+        fd = open("MIFIFO", O_RDONLY);
+        read(fd, data, sizeof(data));
+        close(fd);
+        //printf("\tmensaje: %s", data);
+        int resultado2 = strcmp(data,"llego");
+
+        if (resultado2 == 0)
+        {  
+             do{
                 printf("\t=====================================================\n");
-                printf("\t|                   ** Rentas **                    |\n");
+                printf("\t              * Bienvenido %s *                 \n",nombres);
+                printf("\t=====================================================\n");
+                printf("\t=====================================================\n");
+                printf("\t|                   * Rentas *                    |\n");
                 printf("\t=====================================================\n");
                 printf("\t|                      1.  Alta                     |\n");
                 printf("\t|     2.  Devolver pelicula.        3.  Mostrar.    |\n");
@@ -363,31 +405,23 @@ void menuRenta()
                     break;
                 }
             } while (opcionMenu != 6);
-        
-    }
-    else
-    {
 
-        int resultado = strcmp(opSocio, "no");
-
-        if (resultado == 0)
-        {
-
-            sprintf(data, "no");
-            fd = open("MIFIFO", O_WRONLY);
-            write(fd, data, sizeof(data));
-            close(fd);
         }
-        else
+        else{
+            int resultado2 = strcmp(data,"fallo");
+
+        if (resultado2 == 0)
         {
-            printf("\n Opcion no es valida o no existe \n ");
-            sprintf(data, "salir");
-            fd = open("MIFIFO", O_WRONLY);
-            write(fd, data, sizeof(data));
-            close(fd);
+             printf("\n-----------------------------------------------\n");
+             printf("\n No se encontro ningun usuario con ese nombre \n");
+             printf("\n-----------------------------------------------\n");
+             printf("\n Enviando a la funcion de insertar nuevo socio \n");
+             printf("\n-----------------------------------------------\n");
+             insertarSocio();
         }
+        }
+                
     }
-}
 
 void altaRenta()
 {
@@ -855,7 +889,7 @@ void consultarSocio()
     printf("\n Ingresa el nombre del socio que quieras buscar: ");
     scanf("%s", &nombre);
     printf("--------------------------------------------------------------------------------- \n");
-    sprintf(data, "select * from socio where nombre = '%s'", nombre);
+    sprintf(data, "select * from socio where nombres = '%s'", nombre);
     fd = open("MIFIFO", O_WRONLY);
     write(fd, data, sizeof(data));
     close(fd);
@@ -1097,17 +1131,22 @@ void menuReporte()
                 break;
             case 2:
                 printf("\t|     2.  Peliculas de ciencis f.              |\n");
+                peliculasCienciaF();
                 // clock_t end = clock();
                 break;
             case 3:
                 printf("\t|     3.  Total de abonos en el mes de febrero.|\n");
+                abonosFebrero();
                 break;
             case 4:
                 printf("\t|     4.  Socios que han rentado               |\n");
+                
+                sociosRentas();
                 // clock_t end = clock();
                 break;
             case 5:
                 printf("\t|     5.- Peliculas de cada genero rentadas    |\n");
+                peliculasRentadas_x_genero();
                 // clock_t end = clock();
                 break;
         }
@@ -1115,6 +1154,103 @@ void menuReporte()
 }
 
 void sociosSinRentas()
+{
+
+    char fil[100], col[100], cad[1000];
+    int fd2 = open("MIFIFO", O_RDONLY);
+    read(fd2, fil, sizeof(fil));
+    read(fd2, col, sizeof(col));
+
+    int filas = atoi(fil);
+    int columnas = atoi(col);
+
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < columnas; j++)
+        {
+            read(fd2, cad, sizeof(cad));
+            printf("%-5s\t|   ", cad);
+        }
+        printf("\n");
+        printf("--------------------------------------------------------------------------------- \n");
+    }
+    // close(fd);
+    close(fd2);
+}
+void peliculasCienciaF()
+{
+
+    char fil[100], col[100], cad[1000];
+    int fd2 = open("MIFIFO", O_RDONLY);
+    read(fd2, fil, sizeof(fil));
+    read(fd2, col, sizeof(col));
+
+    int filas = atoi(fil);
+    int columnas = atoi(col);
+
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < columnas; j++)
+        {
+            read(fd2, cad, sizeof(cad));
+            printf("%-5s\t|   ", cad);
+        }
+        printf("\n");
+        printf("--------------------------------------------------------------------------------- \n");
+    }
+    // close(fd);
+    close(fd2);
+}
+void abonosFebrero()
+{
+
+    char fil[100], col[100], cad[1000];
+    int fd2 = open("MIFIFO", O_RDONLY);
+    read(fd2, fil, sizeof(fil));
+    read(fd2, col, sizeof(col));
+
+    int filas = atoi(fil);
+    int columnas = atoi(col);
+
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < columnas; j++)
+        {
+            read(fd2, cad, sizeof(cad));
+            printf("%-5s\t|   ", cad);
+        }
+        printf("\n");
+        printf("--------------------------------------------------------------------------------- \n");
+    }
+    // close(fd);
+    close(fd2);
+}
+void sociosRentas()
+{
+
+    char fil[100], col[100], cad[1000];
+    int fd2 = open("MIFIFO", O_RDONLY);
+    read(fd2, fil, sizeof(fil));
+    read(fd2, col, sizeof(col));
+
+    int filas = atoi(fil);
+    int columnas = atoi(col);
+
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < columnas; j++)
+        {
+            read(fd2, cad, sizeof(cad));
+            printf("%-5s\t|   ", cad);
+        }
+        printf("\n");
+        printf("--------------------------------------------------------------------------------- \n");
+    }
+    // close(fd);
+    close(fd2);
+}
+
+void peliculasRentadas_x_genero()
 {
 
     char fil[100], col[100], cad[1000];

@@ -6,6 +6,7 @@
 #include </usr/include/postgresql/libpq-fe.h>
 #include<time.h>
 
+
 int fd;
 char data[300], opcionfifo[2];
 char cad[100], fil[50], col[50];
@@ -21,6 +22,10 @@ void mostrarPeli_dos(PGconn * conn);
 //reportes
 void menuReportes(PGconn * conn);
 void sociosSinRentas(PGconn * conn);
+void peliculasCienciaF(PGconn * conn);
+void abonosFebrero(PGconn * conn);
+void sociosRentas(PGconn * conn);
+void peliculasRentadas_x_genero(PGconn * conn);
 
 //renta
 void menuRenta(PGconn * conn);
@@ -31,6 +36,7 @@ void MostrarPelicula(PGconn * conn);
 void BuscarPelicula(PGconn * conn);
 void EditarPelicula(PGconn * conn);
 void bajaPelicula(PGconn * conn);
+void editarGeneroPelicula(PGconn * conn);
 //genero
 void insertarGenero(PGconn * conn);
 void mostrarGenero(PGconn * conn);
@@ -187,8 +193,12 @@ void menuPelicula(PGconn * conn) {
 
          } while (opcionMenu != 6);
          break;
+         case 3:
+            printf("\t editar GENERO Pelicula \n");
+            editarGeneroPelicula(conn);
+         break;
       }
-   } while (opcionMenu != 3);
+   } while (opcionMenu != 4);
 }
 void menuSocio(PGconn * conn) {
    do {
@@ -228,47 +238,25 @@ void menuSocio(PGconn * conn) {
 }
 //
 void menuRenta(PGconn * conn) {
+   char instrucc[1000];
 
-   fd = open("MIFIFO", O_RDONLY);
-   read(fd, data, sizeof(data));
-   close(fd);
-
-   int resultado = strcmp(data, "si");
-
-   if (resultado == 0) {
-   printf("entraste a la comprobacion de cliente \n");
-
-   char instrucc[1000], filas[1000], columnas[1000];
    fd = open("MIFIFO", O_RDONLY);
    read(fd, instrucc, sizeof(instrucc));
    close(fd);
    resultado = PQexec(conn, instrucc);
- 
+   int fil2 = PQntuples(resultado);
+   printf("\t Filas: %d \n",fil2);
+   
+   if(fil2 > 0)
+   {
+   sprintf(instrucc, "llego");
+   fd = open("MIFIFO", O_WRONLY);
+   write(fd, instrucc, sizeof(instrucc));
+   close(fd);
 
-   if (resultado != NULL) {
-      printf("entraste a la comprobacion de cliente ok \n");
-      fd = open("MIFIFO", O_WRONLY);
-      write(fd, data, sizeof(data));
-      close(fd);
 
-   }
-   else {
-      
-      printf("entraste a la comprobacion de cliente fallo \n");
-
-      sprintf(data,"no");
-      fd = open("MIFIFO", O_WRONLY);
-      write(fd, data, sizeof(data));
-      close(fd);
-
-   }
-
-   //close(fd2);
-
-      do {
-         
+   do {       
          printf("\t Estas en submenu Renta \n");
-
          fd = open("MIFIFO", O_RDONLY);
          read(fd, opcionfifo, sizeof(opcionfifo));
          close(fd);
@@ -303,19 +291,15 @@ void menuRenta(PGconn * conn) {
 
    }
    else {
-
-      int resultado = strcmp(data, "no");
-
-      if (resultado == 0) {
-
-      }
-      else {
-
-
-      }
+   sprintf(instrucc, "fallo");
+   fd = open("MIFIFO", O_WRONLY);
+   write(fd, instrucc, sizeof(instrucc));
+   close(fd);
+   printf("\n Llamando funcion insertar socio \n");
+   insertarS(conn);
+   }
 
    }
-}
 
 //
 void insertarP(PGconn * conn) {
@@ -754,16 +738,20 @@ void menuReportes(PGconn * conn) {
             break;
          case 2:
             printf("\t|     2.  Peliculas de ciencis f.              |\n");
+            peliculasCienciaF(conn);
             break;
          case 3:
             printf("\t|     3.  Total de abonos en el mes de febrero.|\n");
+            // abonosFebrero(conn);
             break;
          case 4:
             printf("\t|     4.  Socios que han rentado               |\n");
+            sociosRentas(conn);
 
             break;
          case 5:
-          printf("\t|     5.- Peliculas de cada genero rentadas    |\n");
+            printf("\t|     5.- Peliculas de cada genero rentadas    |\n");
+            peliculasRentadas_x_genero(conn);
    
             break;
 
@@ -774,7 +762,7 @@ void sociosSinRentas(PGconn * conn) {
    inicio = clock();
    time_spent = 0;
    char instrucc[100], filas[100], columnas[100];
-   sprintf(instrucc, "SELECT t1.id_socio,t1.nombre,t1.apellidos FROM socio t1 LEFT JOIN renta t2 ON t2.id_socio = t1.id_socio WHERE t2.id_socio IS NULL");
+   sprintf(instrucc, "SELECT t1.id_socio,t1.nombres,t1.apellidos FROM socio t1 LEFT JOIN renta t2 ON t2.id_socio = t1.id_socio WHERE t2.id_socio IS NULL");
    resultado = PQexec(conn, instrucc);
    int fil = PQntuples(resultado);
    int col = PQnfields(resultado);
@@ -801,5 +789,142 @@ void sociosSinRentas(PGconn * conn) {
    fin = clock();
    time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
    printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
+
+}
+void peliculasCienciaF(PGconn * conn) {
+   inicio = clock();
+   time_spent = 0;
+   char instrucc[100], filas[100], columnas[100];
+   sprintf(instrucc, "SELECT p.id_local,l.nombrelocal,l.direccion, p.titulo,g.nombreg FROM pelicula AS p INNER JOIN local AS l ON p.id_local = l.id_local INNER JOIN genero_pelicula as gp ON gp.id_pelicula = p.id_pelicula inner join genero as g on g.id_genero = gp.id_genero and nombreg = 'Ciencia Ficcion';");
+   resultado = PQexec(conn, instrucc);
+   int fil = PQntuples(resultado);
+   int col = PQnfields(resultado);
+   sprintf(filas, "%d", fil);
+   sprintf(columnas, "%d", col);
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%-5s\t|", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n________________________________________________________________________________________________________\n");
+      }
+   } else {
+      printf("\nNo hay datos");
+   }
+   close(fd2);
+   char tiempo[1000];
+   fin = clock();
+   time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
+   printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
+
+}
+void sociosRentas(PGconn * conn) {
+   inicio = clock();
+   time_spent = 0;
+   char instrucc[100], filas[100], columnas[100];
+   sprintf(instrucc, "SELECT t1.id_socio,t1.nombres,t1.apellidos,t1.direccion,p1.titulo,t3.fecha_salida FROM socio t1 inner join renta t2 ON t2.id_socio = t1.id_socio inner join det_renta t3 ON t3.id_renta = t2.id_renta inner join pelicula p1 on p1.id_pelicula = t3.id_pelicula;");
+   resultado = PQexec(conn, instrucc);
+   int fil = PQntuples(resultado);
+   int col = PQnfields(resultado);
+   sprintf(filas, "%d", fil);
+   sprintf(columnas, "%d", col);
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%-5s\t|", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n________________________________________________________________________________________________________\n");
+      }
+   } else {
+      printf("\nNo hay datos");
+   }
+   close(fd2);
+   char tiempo[1000];
+   fin = clock();
+   time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
+   printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
+
+}
+void peliculasRentadas_x_genero(PGconn * conn){
+   inicio = clock();
+   time_spent = 0;
+   char instrucc[100], filas[100], columnas[100];
+   sprintf(instrucc, "select count(nombreg),nombreg from pelicula p1 inner join det_renta dt on dt.id_pelicula = p1.id_pelicula inner join genero_pelicula gp on gp.id_pelicula = dt.id_pelicula inner join genero g on g.id_genero = gp.id_genero group by nombreg;");
+   resultado = PQexec(conn, instrucc);
+   int fil = PQntuples(resultado);
+   int col = PQnfields(resultado);
+   sprintf(filas, "%d", fil);
+   sprintf(columnas, "%d", col);
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%-5s\t|", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n________________________________________________________________________________________________________\n");
+      }
+   } else {
+      printf("\nNo hay datos");
+   }
+   close(fd2);
+   char tiempo[1000];
+   fin = clock();
+   time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
+   printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
+
+}
+void editarGeneroPelicula(PGconn * conn){
+   inicio = clock();
+   time_spent = 0;
+   char instrucc[100], filas[100], columnas[100];
+   sprintf(instrucc, "select MAX(id_pelicula) from pelicula;");
+   resultado = PQexec(conn, instrucc);
+   int fil = PQntuples(resultado);
+   int col = PQnfields(resultado);
+   sprintf(filas, "%d", fil);
+   sprintf(columnas, "%d", col);
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%-5s\t|", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n________________________________________________________________________________________________________\n");
+      }
+   } else {
+      printf("\nNo hay datos");
+   }
+   close(fd2);
+   char tiempo[1000];
+   fin = clock();
+   time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
+   printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
+
+
+
+
+
 
 }
