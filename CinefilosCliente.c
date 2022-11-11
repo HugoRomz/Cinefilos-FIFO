@@ -238,29 +238,57 @@ void menuPelicula()
     } while (opcionMenu != 4);
 }
 void editarGeneroPelicula(){
+
+    system("clear");
+
     char fil[100], col[100], cad[1000];
     int fd2 = open("MIFIFO", O_RDONLY);
     int id_peli;
+    
     read(fd2, fil, sizeof(fil));
     read(fd2, col, sizeof(col));
 
     int filas = atoi(fil);
     int columnas = atoi(col);
-
+    printf("\t-----------------------------------------------------------------------------------------------\n");
     for (int i = 0; i < filas; i++)
     {
         for (int j = 0; j < columnas; j++)
         {
             read(fd2, cad, sizeof(cad));
-            printf("%-5s\t|   ", cad);
+            printf("\t%-15s\t|   ", cad);
         }
-        printf("\n");
-        printf("--------------------------------------------------------------------------------- \n");
+    printf("\n");    
+    printf("\t----------------------------------------------------------------------------------------------\n");
     }
     // close(fd);
     close(fd2);
-    id_peli = atoi (cad);
-    printf("el ultimo id de las peliculas son %d",cad);
+    printf("\n");
+
+  
+    int id,nuevoGenero;
+    printf("\t===============================================\n");
+    puts("\tDame el id de la pelicula a cambiar de Genero: ");
+    printf("\t");scanf("%d", &id);
+    printf("\t===============================================\n");
+
+    //MOSTRAR GENEROS
+   
+    buscarGenero();
+    fflush(stdin);
+    printf("\n\t===============================================\n");
+    puts("\tIngresa el ID del Genero: ");
+    printf("\t");scanf("%d", &nuevoGenero);
+    printf("\t===============================================\n");
+    
+    sprintf(data, "UPDATE genero_pelicula SET id_genero= %d WHERE id_pelicula=%d",nuevoGenero,id);
+    fd = open("MIFIFO", O_WRONLY);
+    write(fd, data, sizeof(data));
+    close(fd);
+
+
+   
+   
 
 }
 void menuSocio()
@@ -931,7 +959,6 @@ void insertarGenero()
 }
 void buscarGenero()
 {
-
     char fil[100], col[100], cad[1000];
     int fd2 = open("MIFIFO", O_RDONLY);
     read(fd2, fil, sizeof(fil));
@@ -1249,6 +1276,8 @@ void sociosRentas()
     // close(fd);
     close(fd2);
 }
+
+
 
 void peliculasRentadas_x_genero()
 {

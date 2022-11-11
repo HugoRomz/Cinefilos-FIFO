@@ -39,7 +39,7 @@ CREATE TABLE socio(
     nombres text,
     apellidos text,
     curp text,
-    telefeno text,
+    telefono text,
     direccion text,
     tipo text,
     statusM int
@@ -277,9 +277,6 @@ execute procedure checar_stock();
 
 --//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
 CREATE OR REPLACE FUNCTION cargar_total () RETURNS TRIGGER
 AS
 $$
@@ -311,27 +308,21 @@ for each row
 execute procedure cargar_total();
 
 --/////////////////////////////////////////////////////////////////////////////////////7
-
-
-CREATE OR REPLACE FUNCTION calcular_por_fechas () RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION insert_genero_pelicula () RETURNS TRIGGER
 AS
 $BODY$
     DECLARE 
-        dias int;
+        _id_pelicula int;
     BEGIN
-        select (fecha_entrada-fecha_salida)into dias from det_renta inner join renta on det_renta.id_renta = renta.id_renta and cns = new.cns;
-        if(dias <= 5) then
-            UPDATE renta SET descuento = (0.1), exedente = 0 WHERE id_renta = NEW.id_renta;
-        else
-            UPDATE renta SET exedente = (dias * 10), descuento = 0 WHERE id_renta = NEW.id_renta;
-        end if;
+        select id_pelicula into _id_pelicula from pelicula order by id_pelicula desc limit 1 ;
+        insert into genero_pelicula (id_pelicula, id_genero)values(_id_pelicula,19);
         RETURN NEW;
     END;
 $BODY$
 LANGUAGE plpgsql;
-CREATE TRIGGER TR_UPDATE_FECHA after UPDATE ON det_renta
+CREATE TRIGGER TR_INSERT_genero_pelicula AFTER insert ON pelicula
 for each row
-execute procedure calcular_por_fechas();
+execute procedure insert_genero_pelicula();
 
 
 --CONSULTA DE GENERO PELICULA

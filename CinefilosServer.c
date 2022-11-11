@@ -188,6 +188,7 @@ void menuPelicula(PGconn * conn) {
                printf("\t ELIMINAR GENERO \n");
                bajaGenero(conn);
                break;
+               
 
             }
 
@@ -214,7 +215,6 @@ void menuSocio(PGconn * conn) {
          printf("mostrar socios\n");
          mostrarSocio(conn);
          break;
-
       case 2:
          printf("insertar socios\n");
          insertarS(conn);
@@ -223,7 +223,6 @@ void menuSocio(PGconn * conn) {
          printf("buscar socio por nombre\n");
          buscarSocio(conn);
          break;
-
       case 4:
          printf("editar socios\n");
          EditarSocio(conn);
@@ -890,19 +889,27 @@ void peliculasRentadas_x_genero(PGconn * conn){
    printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
 
 }
+
 void editarGeneroPelicula(PGconn * conn){
    inicio = clock();
    time_spent = 0;
    char instrucc[100], filas[100], columnas[100];
-   sprintf(instrucc, "select MAX(id_pelicula) from pelicula;");
+
+   sprintf(instrucc, "select pelicula.id_pelicula,pelicula.titulo,pelicula.director,pelicula.stock,genero.nombreg from pelicula,genero,genero_pelicula as gp where gp.id_pelicula=pelicula.id_pelicula and gp.id_genero=genero.id_genero and pelicula.status = 1 ORDER BY gp.id_genero;");
+   
    resultado = PQexec(conn, instrucc);
+
    int fil = PQntuples(resultado);
    int col = PQnfields(resultado);
+
    sprintf(filas, "%d", fil);
    sprintf(columnas, "%d", col);
+
    int fd2 = open("MIFIFO", O_WRONLY);
+
    write(fd2, filas, sizeof(filas));
    write(fd2, columnas, sizeof(columnas));
+
    if (resultado != NULL) {
       char res[1000];
       for (int i = 0; i < PQntuples(resultado); i++) { //filas
@@ -916,6 +923,7 @@ void editarGeneroPelicula(PGconn * conn){
    } else {
       printf("\nNo hay datos");
    }
+   mostrarGenero(conn);
    close(fd2);
    char tiempo[1000];
    fin = clock();
@@ -923,8 +931,16 @@ void editarGeneroPelicula(PGconn * conn){
    printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
 
 
+   fd = open("MIFIFO", O_RDONLY);
+   read(fd, data, sizeof(data));
+   res = PQexec(conn, data);
+   close(fd);
+   
+   fin = clock();
+   time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
+   printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
 
-
+   
 
 
 }
