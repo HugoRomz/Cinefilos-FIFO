@@ -600,7 +600,7 @@ void mostrarSocio(PGconn * conn) {
    inicio = clock();
    time_spent = 0;
    char instrucc[100], filas[100], columnas[100];
-   sprintf(instrucc, "select * from socio;");
+   sprintf(instrucc, "select * from socio where statusm=1;");
    resultado = PQexec(conn, instrucc);
    int fil = PQntuples(resultado);
    int col = PQnfields(resultado);
