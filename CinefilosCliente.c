@@ -13,6 +13,9 @@
 int opcionMenu;
 char opcionfifo[1];
 int fd;
+char nombres[50], telefono[100];
+char cad_id[1000];
+int numero;
 
 // variables Pelicula
 int stockP;
@@ -50,11 +53,14 @@ int buscarSocio();
 void EliminarSocio();
 void actualizarSocio();
 void consultarSocio();
+void idSocio();
 // renta
 void menuRenta();
 void altaRenta();
 void devolverRenta();
 void mostrarRentas();
+void mostrarulti_renta();
+void mostrarlocal();
 
 // clock_t begin,end;
 int main()
@@ -337,10 +343,9 @@ void menuSocio()
         }
     } while (opcionMenu != 6);
 }
-
 void menuRenta()
 {
-    char opSocio[50], nombres[50], telefono[100];
+    char opSocio[50]; 
 
     
     printf("--------------------------------------------------------------------------------- \n");
@@ -388,12 +393,16 @@ void menuRenta()
 
         if (resultado2 == 0)
         {  
+            idSocio();
+            numero = atoi(cad_id);
+
              do{
                 printf("\t=====================================================\n");
-                printf("\t              * Bienvenido %s *                 \n",nombres);
+                printf("\t              ** Bienvenido %s **                 \n",nombres);
                 printf("\t=====================================================\n");
+                printf("\t                 ** Tu id es: %d **                 \n",numero);
                 printf("\t=====================================================\n");
-                printf("\t|                   * Rentas *                    |\n");
+                printf("\t|                   ** Rentas **                    |\n");
                 printf("\t=====================================================\n");
                 printf("\t|                      1.  Alta                     |\n");
                 printf("\t|     2.  Devolver pelicula.        3.  Mostrar.    |\n");
@@ -412,25 +421,27 @@ void menuRenta()
 
                 switch (opcionMenu)
                 {
-                case 1:
-                    // begin = clock();
-                    printf("renta Alta\n");
-                    break;
-                case 2:
-                    printf("renta Devolver\n");
-                    // clock_t end = clock();
-                    break;
-                case 3:
-                    printf("renta Mostrar\n");
-                    break;
-                case 4:
-                    printf("renta Editar\n");
-                    // clock_t end = clock();
-                    break;
-                case 5:
-                    printf("renta Buscar\n");
-                    // clock_t end = clock();
-                    break;
+                    case 1:
+                        // begin = clock();
+                        printf("renta Alta\n");
+                        altaRenta();
+                        break;
+                    case 2:
+                        printf("renta Devolver\n");
+                        devolverRenta();
+                        // clock_t end = clock();
+                        break;
+                    case 3:
+                        printf("renta Mostrar\n");
+                        break;
+                    case 4:
+                        printf("renta Editar\n");
+                        // clock_t end = clock();
+                        break;
+                    case 5:
+                        printf("renta Buscar\n");
+                        // clock_t end = clock();
+                        break;
                 }
             } while (opcionMenu != 6);
 
@@ -451,13 +462,137 @@ void menuRenta()
                 
     }
 
+
 void altaRenta()
 {
-    printf("aqui deberia estar el codigo de alta renta y det_renta, pero no mas no hay no existe\n");
+    int id_socio,id_local;
+    printf("ingrese el id del socio: ");
+    scanf("%d", &id_socio);
+    printf("\n--------------------------------------------------------------------------------- \n");
+    mostrarlocal();
+    printf("\n--------------------------------------------------------------------------------- \n");
+    puts("Ingresa el id del local: ");
+    scanf("%d", &id_local);
+  
+    sprintf(data, "insert into renta(id_socio,id_local,status)values(%d,%d,0);", id_socio, id_local);
+    fd = open("MIFIFO", O_WRONLY);
+    write(fd, data, sizeof(data));
+    close(fd);
+    int respuestaRenta;
+    sleep(1);
+    mostrarulti_renta();
+    do{
+        int id_renta,id_pelicula,cantidad;
+        printf("ingrese el id de renta : ");
+        scanf("%d", &id_renta);
+        printf("\n--------------------------------------------------------------------------------- \n");
+        MostrarPeliculas();
+        printf("\n--------------------------------------------------------------------------------- \n");
+        puts("Ingresa el id de la pelicula: ");
+        scanf("%d", &id_pelicula);
+        puts("Ingresa la cantidad : ");
+        scanf("%d", &cantidad);
+        // puts("Ingresa la fecha de salida : ");
+        // scanf("%s", &fecha_salida);
+        time_t t;
+        struct tm *tm;
+        char fecha[100];
+        t=time(NULL);
+        tm=localtime(&t);
+        strftime(fecha, 100, "%Y-%m-%d", tm);
+        // printf ("%s", fecha);
+
+        sprintf(data, "insert into det_renta (id_renta,id_pelicula,cantidad,fecha_salida)values(%d,%d,%d,'%s');", id_renta, id_pelicula,cantidad,fecha);
+        fd = open("MIFIFO", O_WRONLY);
+        write(fd, data, sizeof(data));
+        close(fd);
+        
+        printf("\t desea seguir rentando? si ( 1 ) o no ( 0 ):");
+        scanf("%d",&respuestaRenta);
+        sprintf(data,"%d",respuestaRenta);
+        fd = open("MIFIFO", O_WRONLY);
+        write(fd, data, sizeof(data));
+        close(fd);
+        
+    }while(respuestaRenta != 0);
+               
+
+}
+void mostrarlocal(){
+    char fil[1000], col[1000], cad[1000];
+    sprintf(data, "select * from local");
+    fd = open("MIFIFO", O_WRONLY);
+    write(fd, data, sizeof(data));
+    close(fd);
+
+    int fd2 = open("MIFIFO", O_RDONLY);
+    read(fd2, fil, sizeof(fil));
+    read(fd2, col, sizeof(col));
+
+    int filas = atoi(fil);
+    int columnas = atoi(col);
+
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < columnas; j++)
+        {
+            read(fd2, cad, sizeof(cad));
+            printf("%s\t|   ", cad);
+        }
+        printf("\n");
+        printf("--------------------------------------------------------------------------------- \n");
+    }
+    close(fd2);
+
+}
+void mostrarulti_renta()
+{
+    char fil[100], col[100], cad[1000];
+    int fd2 = open("MIFIFO", O_RDONLY);
+   
+    read(fd2, fil, sizeof(fil));
+    read(fd2, col, sizeof(col));
+
+    int filas = atoi(fil);
+    int columnas = atoi(col);
+
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < columnas; j++)
+        {
+            read(fd2, cad, sizeof(cad));
+            printf("ultimo id_renta:  %-5s\t|   ", cad);
+        }
+        printf("\n");
+        printf("--------------------------------------------------------------------------------- \n");
+    }
+    // close(fd);
+    close(fd2);
+
 }
 void devolverRenta()
-{
-    printf("aqui deberia estar el codigo de devolver renta y det_renta, pero no mas no hay no existe\n");
+{   
+    char fil[1000],col[1000],cad[1000];
+    printf("\t su ide es: %d \n",numero);
+    int id_renta;
+    char fecha_entrega[100];
+    printf("\t Ingrese el id de renta: ");
+    scanf("%d",&id_renta);
+    printf("\t Ingrese la fecha entrega: ");
+    scanf("%s",&fecha_entrega);
+
+    printf("--------------------------------------------------------------------------------- \n");
+    sprintf(data," update det_renta set fecha_entrada = '%s' where id_renta = %d;",fecha_entrega, id_renta);
+    fd = open("MIFIFO", O_WRONLY);
+    write(fd, data, sizeof(data));
+    close(fd);
+    sleep(2);
+    sprintf(data," update renta set status = 1 where id_renta = %d;", id_renta);
+    fd = open("MIFIFO", O_WRONLY);
+    write(fd, data, sizeof(data));
+    close(fd);
+    
+    
 }
 void mostrarRentas()
 {
@@ -828,6 +963,38 @@ int buscarSocio()
     close(fd2);
 
     return 0;
+}
+
+
+void idSocio()
+{
+    char fil[1000], col[1000];
+    sprintf(data, "select id_socio from socio where nombres = '%s' and telefono = '%s';", nombres, telefono);
+    fd = open("MIFIFO", O_WRONLY);
+    write(fd, data, sizeof(data));
+    close(fd);
+    int fd2 = open("MIFIFO", O_RDONLY);
+    read(fd2, fil, sizeof(fil));
+    read(fd2, col, sizeof(col));
+
+    int filas = atoi(fil);
+    int columnas = atoi(col);
+
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < columnas; j++)
+        {
+            read(fd2, cad_id, sizeof(cad_id));
+            //printf("%s", cad);
+        }
+        printf("\n");
+        printf("--------------------------------------------------------------------------------- \n");
+    }
+
+    close(fd2);
+    //     end = time(NULL);
+    //     // calcular el tiempo transcurrido encontrando la diferencia (end - begin)
+    //    printf("Tiempo de conexecion de ejecucion del cliente : %d seconds", (end - begin));
 }
 
 void EliminarSocio()

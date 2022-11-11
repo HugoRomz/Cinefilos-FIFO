@@ -29,6 +29,12 @@ void peliculasRentadas_x_genero(PGconn * conn);
 
 //renta
 void menuRenta(PGconn * conn);
+void altaRenta(PGconn * conn);
+void ult_renta(PGconn * conn);
+void mostrarlocal(PGconn * conn);
+void socio_xrenta(PGconn * conn);
+void devolverPelicula(PGconn * conn);
+
 //apartado de pelicula
 void menuPelicula(PGconn * conn);
 void insertarP(PGconn * conn);
@@ -50,6 +56,8 @@ void mostrarSocio(PGconn * conn);
 void EliminarSocio(PGconn * conn);
 void EditarSocio(PGconn * conn);
 void buscarSocio(PGconn * conn);
+void idSocio(PGconn * conn);
+
 
 //para cerrar conexion
 void do_exit(PGconn * conn) {
@@ -235,7 +243,8 @@ void menuSocio(PGconn * conn) {
       }
    } while (opcionMenu != 6);
 }
-//
+
+
 void menuRenta(PGconn * conn) {
    char instrucc[1000];
 
@@ -248,45 +257,48 @@ void menuRenta(PGconn * conn) {
    
    if(fil2 > 0)
    {
-   sprintf(instrucc, "llego");
-   fd = open("MIFIFO", O_WRONLY);
-   write(fd, instrucc, sizeof(instrucc));
-   close(fd);
+      sprintf(instrucc, "llego");
+      fd = open("MIFIFO", O_WRONLY);
+      write(fd, instrucc, sizeof(instrucc));
+      close(fd);
+
+      idSocio(conn);
 
 
-   do {       
-         printf("\t Estas en submenu Renta \n");
-         fd = open("MIFIFO", O_RDONLY);
-         read(fd, opcionfifo, sizeof(opcionfifo));
-         close(fd);
-         opcionMenu = atoi(opcionfifo);
+      do {       
+            printf("\t Estas en submenu Renta \n");
+            fd = open("MIFIFO", O_RDONLY);
+            read(fd, opcionfifo, sizeof(opcionfifo));
+            close(fd);
+            opcionMenu = atoi(opcionfifo);
 
-         switch (opcionMenu) {
-            case 1:
-               printf("Alta renta\n");
-            
-               break;
-
-            case 2:
-               printf("renta 2\n");
-            
-               break;
-            case 3:
-               printf("renta 2\n");
-            
-               break;
-
-            case 4:
-               printf("renta 2\n");
+            switch (opcionMenu) {
+               case 1:
+                  printf("Alta renta\n");
+                  altaRenta(conn);
                
-               break;
-            case 5:
-               printf("elimina\n");
-            
-               break;
+                  break;
 
-         }
-      } while (opcionMenu != 6);
+               case 2:
+                  printf("renta 2\n");
+                  devolverPelicula(conn);            
+                  break;
+               case 3:
+                  printf("renta 2\n");
+               
+                  break;
+
+               case 4:
+                  printf("renta 2\n");
+                  
+                  break;
+               case 5:
+                  printf("elimina\n");
+               
+                  break;
+
+            }
+         } while (opcionMenu != 6);
 
    }
    else {
@@ -298,8 +310,113 @@ void menuRenta(PGconn * conn) {
    insertarS(conn);
    }
 
-   }
 
+}
+
+void devolverPelicula(PGconn * conn){
+   printf("nDEVOLVER PELIS YEIIIII\n");
+   
+   fd = open("MIFIFO", O_RDONLY);
+   read(fd, data, sizeof(data));
+   res = PQexec(conn, data);
+   res = PQexec(conn, data);
+   close(fd);
+   sleep(2);
+   fd = open("MIFIFO", O_RDONLY);
+   read(fd, data, sizeof(data));
+   res = PQexec(conn, data);
+   close(fd);
+   
+
+}
+void altaRenta(PGconn * conn){
+   mostrarlocal(conn);
+
+   fd = open("MIFIFO", O_RDONLY);
+   read(fd, data, sizeof(data));
+   res = PQexec(conn, data);
+   close(fd);
+    int parar;
+   sleep(1);
+   ult_renta(conn);
+   do{
+      MostrarPelicula(conn);
+      fd = open("MIFIFO", O_RDONLY);
+      read(fd, data, sizeof(data));
+      res = PQexec(conn, data);
+      close(fd);
+
+      printf("\n");
+
+      fd = open("MIFIFO", O_RDONLY);
+      read(fd, data, sizeof(data));
+      close(fd);
+      parar = atoi(data);
+
+
+   }while(parar!=0);
+   
+
+}
+void ult_renta(PGconn * conn){
+   
+   // mostrarSocio(conn);
+   char instrucc[500], filas[100], columnas[100];
+   sprintf(instrucc, "select max(id_renta) from renta;");
+   resultado = PQexec(conn, instrucc);
+   int fil = PQntuples(resultado);
+   int col = PQnfields(resultado);
+   sprintf(filas, "%d", fil);
+   sprintf(columnas, "%d", col);
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%-5s\t|", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n____________________________________\n");
+      }
+   } else {
+      printf("\nNo hay datos");
+   }
+   close(fd2);
+}
+void mostrarlocal(PGconn * conn){
+   char instrucc[1000], filas[1000], columnas[1000];
+   fd = open("MIFIFO", O_RDONLY);
+   read(fd, instrucc, sizeof(instrucc));
+   close(fd);
+   resultado = PQexec(conn, instrucc);
+
+   int fil2 = PQntuples(resultado);
+   int col2 = PQnfields(resultado);
+   sprintf(filas, "%d", fil2);
+   sprintf(columnas, "%d", col2);
+
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%s\t|  ", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n______________\n");
+      }
+   }
+   close(fd2);
+
+
+}
 //
 void insertarP(PGconn * conn) {
    inicio = clock();
@@ -507,6 +624,44 @@ void mostrarSocio(PGconn * conn) {
    }
    close(fd2);
    char tiempo[1000];
+   fin = clock();
+   time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
+   printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
+
+}
+
+void idSocio(PGconn * conn) {
+   inicio = clock();
+   time_spent = 0;
+   char instrucc[1000], filas[1000], columnas[1000];
+   fd = open("MIFIFO", O_RDONLY);
+
+   read(fd, instrucc, sizeof(instrucc));
+   close(fd);
+
+   resultado = PQexec(conn, instrucc);
+
+   int fil2 = PQntuples(resultado);
+   int col2 = PQnfields(resultado);
+   sprintf(filas, "%d", fil2);
+   sprintf(columnas, "%d", col2);
+
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%s\t|  ", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n____________________________________\n");
+      }
+   }
+   close(fd);
    fin = clock();
    time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
    printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
