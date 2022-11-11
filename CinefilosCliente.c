@@ -50,7 +50,7 @@ void bajaGenero();
 void insertarSocio();
 void menuSocio();
 int buscarSocio();
-void EliminarSocio();
+void bajaSocio();
 void actualizarSocio();
 void consultarSocio();
 void idSocio();
@@ -337,7 +337,7 @@ void menuSocio()
             // clock_t end = clock();
             break;
         case 5:
-            EliminarSocio();
+            bajaSocio();
             // clock_t end = clock();
             break;
         }
@@ -996,22 +996,115 @@ void idSocio()
     //     // calcular el tiempo transcurrido encontrando la diferencia (end - begin)
     //    printf("Tiempo de conexecion de ejecucion del cliente : %d seconds", (end - begin));
 }
-
-void EliminarSocio()
+void bajaSocio()
 {
     int id_socio;
-    char instrucc[100];
-    buscarSocio();
+    char opcion[50];
+    char fil[1000], col[1000], cad[1000];
+
+    printf("\t========================  OPCIONES  ======================\n");
+    printf("\t|            habilitar                deshabilitar       |\n");
+    printf("\t==========================================================\n");
     printf("--------------------------------------------------------------------------------- \n");
-    printf("\n Ingresando a la opcion de eliminar socios \n");
+    printf("\n Ingresa la opcion que desees realizar: ");
+    scanf("%s", &opcion);
     printf("--------------------------------------------------------------------------------- \n");
-    printf("\n Ingresa el ID del SOCIO que se desee eliminar: ");
-    scanf("%d", &id_socio);
-    printf("--------------------------------------------------------------------------------- \n");
-    sprintf(instrucc, "delete from socio where id_socio = %d ", id_socio);
-    fd = open("MIFIFO", O_WRONLY);
-    write(fd, instrucc, sizeof(instrucc));
-    close(fd);
+
+    int resultado2 = strcmp(opcion, "habilitar");
+
+    if (resultado2 == 0)
+    {
+
+        sprintf(data, "select * from socio where statusm = 0;");
+        fd = open("MIFIFO", O_WRONLY);
+        write(fd, data, sizeof(data));
+        close(fd);
+
+        int fd2 = open("MIFIFO", O_RDONLY);
+        read(fd2, fil, sizeof(fil));
+        read(fd2, col, sizeof(col));
+
+        int filas = atoi(fil);
+        int columnas = atoi(col);
+
+        for (int i = 0; i < filas; i++)
+        {
+            for (int j = 0; j < columnas; j++)
+            {
+                read(fd2, cad, sizeof(cad));
+                printf("%s\t|   ", cad);
+            }
+            printf("\n");
+            printf("--------------------------------------------------------------------------------- \n");
+        }
+        close(fd2);
+
+        printf("--------------------------------------------------------------------------------- \n");
+        printf("\n Ingresando a la opcion de habilitar socios \n");
+        printf("--------------------------------------------------------------------------------- \n");
+        printf("\n Ingresa el ID del socio: ");
+        scanf("%d", &id_socio);
+
+        sprintf(data, "update socio set statusm = 1 where id_socio = %d ", id_socio);
+        fd = open("MIFIFO", O_WRONLY);
+        write(fd, data, sizeof(data));
+        close(fd);
+    }
+    else
+    {
+
+        int resultado2 = strcmp(opcion, "deshabilitar");
+
+        if (resultado2 == 0)
+        {
+
+            sprintf(data, "select * from socio where statusm = 1;");
+            fd = open("MIFIFO", O_WRONLY);
+            write(fd, data, sizeof(data));
+            close(fd);
+
+            int fd2 = open("MIFIFO", O_RDONLY);
+            read(fd2, fil, sizeof(fil));
+            read(fd2, col, sizeof(col));
+
+            int filas = atoi(fil);
+            int columnas = atoi(col);
+
+            for (int i = 0; i < filas; i++)
+            {
+                for (int j = 0; j < columnas; j++)
+                {
+                    read(fd2, cad, sizeof(cad));
+                    printf("%s\t|   ", cad);
+                }
+                printf("\n");
+                printf("--------------------------------------------------------------------------------- \n");
+            }
+            close(fd2);
+
+            printf("--------------------------------------------------------------------------------- \n");
+            printf("\n Ingresando a la opcion de deshabilitar socios \n");
+            printf("--------------------------------------------------------------------------------- \n");
+            printf("\n Ingresa el ID del socio: ");
+            scanf("%d", &id_socio);
+
+            sprintf(data, "update socio set statusm = 0 where id_socio = %d ", id_socio);
+            fd = open("MIFIFO", O_WRONLY);
+            write(fd, data, sizeof(data));
+            close(fd);
+            // end = time(NULL);
+            // // calcular el tiempo transcurrido encontrando la diferencia (end - begin)
+            // printf("Tiempo de conexecion de ejecucion del cliente : %d seconds", (end - begin));
+        }
+        else
+        {
+            printf("\n Opcion no es valida o no existe \n ");
+            sprintf(data, "salir");
+            fd = open("MIFIFO", O_WRONLY);
+            write(fd, data, sizeof(data));
+            close(fd);
+        }
+    }
 }
 void actualizarSocio()
 {

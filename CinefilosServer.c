@@ -53,7 +53,7 @@ void bajaGenero(PGconn * conn);
 void menuSocio(PGconn * conn);
 void insertarS(PGconn * conn);
 void mostrarSocio(PGconn * conn);
-void EliminarSocio(PGconn * conn);
+void bajaSocio(PGconn * conn);
 void EditarSocio(PGconn * conn);
 void buscarSocio(PGconn * conn);
 void idSocio(PGconn * conn);
@@ -237,7 +237,7 @@ void menuSocio(PGconn * conn) {
          break;
       case 5:
          printf("eliminar socios\n");
-         EliminarSocio(conn);
+         bajaSocio(conn);
          break;
 
       }
@@ -704,10 +704,37 @@ void buscarSocio(PGconn * conn) {
    printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
 
 }
-void EliminarSocio(PGconn * conn) {
-   time_spent = 0;
-   mostrarSocio(conn);
+void bajaSocio(PGconn * conn) {
    inicio = clock();
+   time_spent = 0;
+   char instrucc[1000], filas[1000], columnas[1000];
+   fd = open("MIFIFO", O_RDONLY);
+   read(fd, instrucc, sizeof(instrucc));
+   close(fd);
+   resultado = PQexec(conn, instrucc);
+
+   int fil2 = PQntuples(resultado);
+   int col2 = PQnfields(resultado);
+   sprintf(filas, "%d", fil2);
+   sprintf(columnas, "%d", col2);
+
+   int fd2 = open("MIFIFO", O_WRONLY);
+   write(fd2, filas, sizeof(filas));
+   write(fd2, columnas, sizeof(columnas));
+
+   if (resultado != NULL) {
+      char res[1000];
+      for (int i = 0; i < PQntuples(resultado); i++) { //filas
+         for (int j = 0; j < PQnfields(resultado); j++) { //columnas
+            printf("%s\t|  ", PQgetvalue(resultado, i, j));
+            sprintf(res, PQgetvalue(resultado, i, j));
+            write(fd2, res, sizeof(res));
+         }
+         printf("\n______________\n");
+      }
+   }
+   close(fd2);
+
    fd = open("MIFIFO", O_RDONLY);
    read(fd, data, sizeof(data));
    res = PQexec(conn, data);
@@ -715,8 +742,8 @@ void EliminarSocio(PGconn * conn) {
    fin = clock();
    time_spent += (double)(fin - inicio) / CLOCKS_PER_SEC;
    printf("\n El tiempo de ejecucion en servidor es : %.4f segundos", time_spent);
-
 }
+
 void EditarSocio(PGconn * conn) {
    time_spent = 0;
    inicio = clock();
