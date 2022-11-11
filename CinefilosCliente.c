@@ -405,8 +405,8 @@ void menuRenta()
                 printf("\t|                   ** Rentas **                    |\n");
                 printf("\t=====================================================\n");
                 printf("\t|                      1.  Alta                     |\n");
-                printf("\t|     2.  Devolver pelicula.        3.  Mostrar.    |\n");
-                printf("\t|     4.  Editar.                   5.  Buscar.     |\n");
+                printf("\t|     2.  Devolver pelicula.        3.  M̶o̶s̶t̶r̶a̶r̶.    |\n");
+                printf("\t|     4.  E̶d̶i̶t̶a̶r̶.                   5.  B̶u̶s̶c̶a̶r̶.     |\n");
                 printf("\t|---------------------------------------------------|\n");
                 printf("\t|                    6.- Regresar.                  |\n");
                 printf("\t=====================================================\n");
